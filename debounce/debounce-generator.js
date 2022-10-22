@@ -1,5 +1,5 @@
 /*
- * Higher order function to generate debounced forms of existing function
+ * Higher order function to generate debounced forms of existing functions
  */
 
 
