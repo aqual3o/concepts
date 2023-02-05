@@ -1,26 +1,71 @@
-const eventLib = {};
+class EventManager {
+	constructor(eventName) {
+		this.eventName    = eventName;
+		this.callbacks    = []; 
 
-const __eventManager = {};
-
-eventLib.on = (eventName, cb) => {
-	if (!__eventManager [eventName])
-		__eventManager [eventName] = [];
-
-	__eventManager [eventName].push (cb);
-};
-
-eventLib.emit = (eventName, eventData) => {
-	__callInterestedParties (eventName, eventData);
-};
-
-const __callInterestedParties = (eventName, eventData) => {
-	if (!__eventManager [eventName])
-		return;
-
-	for (let i = 0 ; i < __eventManager [eventName].length ; i++) {
-		let cb = __eventManager [eventName] [i];
-		cb (eventName, eventData);
+		this.emit         = this.emit.bind(this);
+		this.registerCB   = this.registerCB.bind(this);
+		this.unregisterCB = this.unregisterCB.bind(this);
+	} 
+	
+	registerCB(cb) {
+		this.callbacks.push(cb);
+	} 
+	
+	unregisterCB(cb) {
+		const index = this.callbacks.indexOf(cb); 
+		
+		if (index > -1 && index < this.callbacks.length) {
+			this.callbacks.splice(index, 1);
+		}
+	} 
+	
+	emit(data) {
+		this.callbacks.forEach((cb) => {
+			cb(data);
+		});
 	}
-};
+}
 
-module.exports = eventLib;
+class EventDispatcher {
+	constructor() {
+		this.__eventList = {}; 
+		
+		this.on       = this.on.bind(this);
+		this.off      = this.off.bind(this);
+		this.dispatch = this.dispatch.bind(this);
+	} 
+
+	dispatch(eventName, eventData) {
+		const event = this.__eventList[eventName]; 
+		
+		if (event) {
+			event.emit(eventData);
+		}
+	} 
+
+	on(eventName, cb) {
+		let event = this.__eventList[eventName]; 
+		
+		if (!event) {
+			event = new EventManager(eventName);
+			this.__eventList[eventName] = event;
+		} 
+		
+		event.registerCB(cb);
+	} 
+	
+	off(eventName, cb) {
+		let event = this.__eventList[eventName]; 
+		
+		if (event?.callbacks.indexOf(cb) > -1) {
+			event.unregisterCB(cb); 
+			
+			if (event.callbacks.length === 0) {
+				delete this.__events[eventName];
+			}
+		}
+	}
+} 
+
+module.exports = EventDispatcher;
